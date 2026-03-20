@@ -1,18 +1,488 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Moneyfacts Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moneyfacts Rules of Thumb - Policy Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
-        body { 
-            font-family: Arial; 
-            background: #0a0e27; 
-            color: white; 
-            padding: 40px; 
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary-blue: #1a3a5c;
+            --accent-blue: #4472c4;
+            --success-green: #70ad47;
+            --warning-red: #e74c3c;
+            --bg-dark: #0f1419;
+            --bg-medium: #1a1f2e;
+            --bg-light: #242b3d;
+            --text-primary: #e8eaed;
+            --text-secondary: #9aa0a6;
+            --border-color: #2d3748;
         }
-        h1 { text-align: center; }
+        body {
+            font-family: 'IBM Plex Sans', sans-serif;
+            background: linear-gradient(135deg, var(--bg-dark) 0%, var(--bg-medium) 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            padding: 2rem;
+        }
+        .dashboard { max-width: 1400px; margin: 0 auto; }
+        .header {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--accent-blue) 100%);
+            padding: 2rem 3rem;
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px rgba(68, 114, 196, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            transform: translate(30%, -30%);
+        }
+        .header-content { position: relative; z-index: 1; }
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 0.5rem;
+            font-family: 'IBM Plex Mono', monospace;
+            letter-spacing: -1px;
+        }
+        .subtitle { font-size: 1rem; color: rgba(255,255,255,0.8); font-weight: 300; }
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .metric-card {
+            background: var(--bg-light);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        .metric-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            border-color: var(--accent-blue);
+        }
+        .metric-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            font-family: 'IBM Plex Mono', monospace;
+            margin-bottom: 0.5rem;
+        }
+        .metric-value.green { color: var(--success-green); }
+        .metric-value.red { color: var(--warning-red); }
+        .metric-value.blue { color: var(--accent-blue); }
+        .metric-change { font-size: 0.85rem; color: var(--text-secondary); }
+        .compliance-summary {
+            text-align: center;
+            padding: 2.5rem;
+            background: linear-gradient(135deg, rgba(68, 114, 196, 0.1) 0%, rgba(68, 114, 196, 0.05) 100%);
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+        }
+        .compliance-score {
+            font-size: 5rem;
+            font-weight: 700;
+            font-family: 'IBM Plex Mono', monospace;
+            margin-bottom: 0.5rem;
+        }
+        .compliance-label {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .controls-section {
+            background: var(--bg-light);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: var(--accent-blue);
+            font-family: 'IBM Plex Mono', monospace;
+        }
+        .slider-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+        .slider-container {
+            padding: 1.5rem;
+            background: rgba(68, 114, 196, 0.05);
+            border-radius: 8px;
+            border: 1px solid rgba(68, 114, 196, 0.2);
+        }
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .slider-label { font-size: 1rem; font-weight: 600; color: var(--text-primary); }
+        .slider-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            font-family: 'IBM Plex Mono', monospace;
+            color: var(--accent-blue);
+        }
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: var(--border-color);
+            outline: none;
+            -webkit-appearance: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--accent-blue);
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(68, 114, 196, 0.5);
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--accent-blue);
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(68, 114, 196, 0.5);
+            border: none;
+        }
+        .rules-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        @media (min-width: 1200px) {
+            .rules-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+        .rule-card {
+            background: var(--bg-light);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        .rule-card.compliant {
+            border-color: var(--success-green);
+            background: linear-gradient(135deg, var(--bg-light) 0%, rgba(112, 173, 71, 0.05) 100%);
+        }
+        .rule-card.non-compliant {
+            border-color: var(--warning-red);
+            background: linear-gradient(135deg, var(--bg-light) 0%, rgba(231, 76, 60, 0.05) 100%);
+        }
+        .rule-card.core-rule {
+            border: 2px solid #ffc107;
+            background: linear-gradient(135deg, var(--bg-light) 0%, rgba(255, 193, 7, 0.08) 100%);
+            box-shadow: 0 4px 16px rgba(255, 193, 7, 0.2);
+        }
+        .rule-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .rule-number {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+            background: rgba(68, 114, 196, 0.15);
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-family: 'IBM Plex Mono', monospace;
+        }
+        .rule-status {
+            font-size: 0.9rem;
+            font-weight: 600;
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+        }
+        .rule-status.compliant {
+            background: rgba(112, 173, 71, 0.2);
+            color: var(--success-green);
+        }
+        .rule-status.non-compliant {
+            background: rgba(231, 76, 60, 0.2);
+            color: var(--warning-red);
+        }
+        .rule-description {
+            font-size: 1rem;
+            color: var(--text-primary);
+            margin-bottom: 1.2rem;
+            line-height: 1.6;
+        }
+        .rule-description strong { color: var(--accent-blue); }
+        .rule-values {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1rem;
+        }
+        .rule-value-item { text-align: center; }
+        .rule-value-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-bottom: 0.4rem;
+            font-weight: 600;
+        }
+        .rule-value-number {
+            font-size: 1.4rem;
+            font-weight: 700;
+            font-family: 'IBM Plex Mono', monospace;
+        }
     </style>
 </head>
 <body>
-    <h1>Moneyfacts Dashboard - Coming Soon</h1>
+    <div class="dashboard">
+        <div class="header">
+            <div class="header-content">
+                <div class="logo">MONEYFACTS® POLICY DASHBOARD</div>
+                <div class="subtitle">Interactive Rules of Thumb Analysis • Real-Time Scenario Modeling</div>
+            </div>
+        </div>
+
+        <div id="metrics" class="metrics-grid"></div>
+        <div id="compliance" class="compliance-summary"></div>
+        
+        <div class="controls-section">
+            <div class="section-title">⚙ SCENARIO CONTROLS</div>
+            <div class="slider-group">
+                <div class="slider-container">
+                    <div class="slider-header">
+                        <span class="slider-label">Bank Base Rate</span>
+                        <span class="slider-value" id="bbr-display">5.00%</span>
+                    </div>
+                    <input type="range" id="bbr-slider" min="0" max="15" step="0.25" value="5.00">
+                </div>
+                <div class="slider-container">
+                    <div class="slider-header">
+                        <span class="slider-label">CPI Inflation</span>
+                        <span class="slider-value" id="cpi-display">7.90%</span>
+                    </div>
+                    <input type="range" id="cpi-slider" min="0" max="15" step="0.25" value="7.90">
+                </div>
+            </div>
+        </div>
+
+        <div class="section-title" style="margin-bottom: 1.5rem;">📋 ALL 9 RULES OF THUMB ANALYSIS</div>
+        <div id="rules" class="rules-grid"></div>
+    </div>
+
+    <script>
+        let bbr = 5.00;
+        let cpi = 7.90;
+
+        const bbrSlider = document.getElementById('bbr-slider');
+        const cpiSlider = document.getElementById('cpi-slider');
+        const bbrDisplay = document.getElementById('bbr-display');
+        const cpiDisplay = document.getElementById('cpi-display');
+
+        function updateDashboard() {
+            bbr = parseFloat(bbrSlider.value);
+            cpi = parseFloat(cpiSlider.value);
+
+            bbrDisplay.textContent = bbr.toFixed(2) + '%';
+            cpiDisplay.textContent = cpi.toFixed(2) + '%';
+
+            const recommendedBbr = cpi + 2.50;
+            const policyGap = bbr - recommendedBbr;
+
+            // Update metrics
+            document.getElementById('metrics').innerHTML = `
+                <div class="metric-card">
+                    <div class="metric-label">Bank Base Rate</div>
+                    <div class="metric-value blue">${bbr.toFixed(2)}%</div>
+                    <div class="metric-change">Current policy rate</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">CPI Inflation</div>
+                    <div class="metric-value red">${cpi.toFixed(2)}%</div>
+                    <div class="metric-change">Consumer price index</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Recommended BBR</div>
+                    <div class="metric-value green">${recommendedBbr.toFixed(2)}%</div>
+                    <div class="metric-change">Per Core Rule (CPI + 2.50%)</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Policy Gap</div>
+                    <div class="metric-value ${policyGap < 0 ? 'red' : 'green'}">${policyGap > 0 ? '+' : ''}${policyGap.toFixed(2)}pp</div>
+                    <div class="metric-change">Deviation from target</div>
+                </div>
+            `;
+
+            // Calculate rules
+            const rules = [
+                {
+                    number: "CORE",
+                    name: "Taylor Principle (Foundation)",
+                    description: "BBR = CPI + 2.50%",
+                    recommended: cpi + 2.50,
+                    actual: bbr,
+                    threshold: 0.50
+                },
+                {
+                    number: "RULE 1",
+                    name: "Savings vs Base Rate",
+                    description: "Savings Rate = BBR - 1.50%",
+                    recommended: bbr - 1.50,
+                    actual: 2.41,
+                    threshold: 0.50
+                },
+                {
+                    number: "RULE 2",
+                    name: "Savings vs Mortgage",
+                    description: "Savings Rate = Mortgage - 3.50%",
+                    recommended: 7.67 - 3.50,
+                    actual: 2.41,
+                    threshold: 0.50
+                },
+                {
+                    number: "RULE 3",
+                    name: "Real Savings Return",
+                    description: "Savings Rate = CPI + 1.25%",
+                    recommended: cpi + 1.25,
+                    actual: 2.41,
+                    threshold: 0.50
+                },
+                {
+                    number: "RULE 4",
+                    name: "10Y Gilt Yield",
+                    description: "10Y Gilt = BBR + 1.50%",
+                    recommended: bbr + 1.50,
+                    actual: 4.44,
+                    threshold: 0.50
+                },
+                {
+                    number: "RULE 5",
+                    name: "Mortgage vs Base Rate",
+                    description: "Mortgage = BBR + 2.00%",
+                    recommended: bbr + 2.00,
+                    actual: 7.67,
+                    threshold: 0.50
+                },
+                {
+                    number: "RULE 6",
+                    name: "Real Mortgage Rate",
+                    description: "Mortgage = CPI + 4.50%",
+                    recommended: cpi + 4.50,
+                    actual: 7.67,
+                    threshold: 0.50
+                },
+                {
+                    number: "RULE 7",
+                    name: "FOREX Competitiveness",
+                    description: "BBR should exceed other major central banks (US=5.25%, ECB=4.00%, Japan=-0.1%, China=3.65%)",
+                    recommended: 5.25,
+                    actual: bbr,
+                    threshold: 0.50
+                },
+                {
+                    number: "RULE 8",
+                    name: "Exchange Rate Targets",
+                    description: "GBP/USD should be ~$1.40, GBP/EUR should be ~€1.30 (Current: $1.27, €1.17)",
+                    recommended: 1.40,
+                    actual: 1.27,
+                    threshold: 0.10
+                }
+            ];
+
+            let compliantCount = 0;
+            let rulesHtml = '';
+
+            rules.forEach(rule => {
+                const margin = rule.actual - rule.recommended;
+                const isCompliant = Math.abs(margin) <= rule.threshold;
+                if (isCompliant) compliantCount++;
+
+                const isCore = rule.number === 'CORE';
+                const cardClass = isCore ? 'rule-card core-rule' : `rule-card ${isCompliant ? 'compliant' : 'non-compliant'}`;
+
+                rulesHtml += `
+                    <div class="${cardClass}">
+                        <div class="rule-header">
+                            <span class="rule-number" style="${isCore ? 'background: rgba(255, 193, 7, 0.2); color: #ffc107;' : ''}">${rule.number}</span>
+                            <span class="rule-status ${isCompliant ? 'compliant' : 'non-compliant'}">
+                                ${isCompliant ? '✓ COMPLIANT' : '✗ NON-COMPLIANT'}
+                            </span>
+                        </div>
+                        <div class="rule-description">
+                            <strong>${rule.name}</strong><br/>
+                            ${rule.description}
+                        </div>
+                        <div class="rule-values">
+                            <div class="rule-value-item">
+                                <div class="rule-value-label">Target</div>
+                                <div class="rule-value-number" style="color: var(--accent-blue);">
+                                    ${rule.recommended.toFixed(2)}${rule.number === 'RULE 8' ? '' : '%'}
+                                </div>
+                            </div>
+                            <div class="rule-value-item">
+                                <div class="rule-value-label">Actual</div>
+                                <div class="rule-value-number" style="color: var(--text-primary);">
+                                    ${rule.actual.toFixed(2)}${rule.number === 'RULE 8' ? '' : '%'}
+                                </div>
+                            </div>
+                            <div class="rule-value-item">
+                                <div class="rule-value-label">Margin</div>
+                                <div class="rule-value-number" style="color: ${isCompliant ? 'var(--success-green)' : 'var(--warning-red)'};">
+                                    ${margin > 0 ? '+' : ''}${margin.toFixed(2)}${rule.number === 'RULE 8' ? '' : 'pp'}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            document.getElementById('rules').innerHTML = rulesHtml;
+
+            const complianceRate = Math.round((compliantCount / rules.length) * 100);
+            const complianceColor = complianceRate >= 70 ? 'var(--success-green)' : 'var(--warning-red)';
+            
+            document.getElementById('compliance').innerHTML = `
+                <div class="compliance-score" style="color: ${complianceColor};">
+                    ${complianceRate}%
+                </div>
+                <div class="compliance-label">Rules Compliance Rate (${compliantCount} of 9 rules)</div>
+            `;
+        }
+
+        bbrSlider.addEventListener('input', updateDashboard);
+        cpiSlider.addEventListener('input', updateDashboard);
+
+        updateDashboard();
+    </script>
 </body>
 </html>
