@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Moneyfacts Rules of Thumb - Policy Dashboard</title>
+    <title>Moneyfacts Policy Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -24,7 +24,6 @@
             background: linear-gradient(135deg, var(--bg-dark) 0%, var(--bg-medium) 100%);
             color: var(--text-primary);
             min-height: 100vh;
-            overflow-x: hidden;
             padding: 2rem;
         }
         .dashboard { max-width: 1400px; margin: 0 auto; }
@@ -34,30 +33,31 @@
             border-radius: 16px;
             margin-bottom: 2rem;
             box-shadow: 0 8px 32px rgba(68, 114, 196, 0.2);
-            position: relative;
-            overflow: hidden;
         }
-        .header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 400px;
-            height: 400px;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-            border-radius: 50%;
-            transform: translate(30%, -30%);
-        }
-        .header-content { position: relative; z-index: 1; }
         .logo {
             font-size: 1.8rem;
             font-weight: 700;
             color: white;
             margin-bottom: 0.5rem;
             font-family: 'IBM Plex Mono', monospace;
-            letter-spacing: -1px;
         }
-        .subtitle { font-size: 1rem; color: rgba(255,255,255,0.8); font-weight: 300; }
+        .subtitle { font-size: 1rem; color: rgba(255,255,255,0.8); margin-bottom: 1rem; }
+        .nav {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .nav a {
+            padding: 0.6rem 1.5rem;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        .nav a:hover { background: rgba(255,255,255,0.2); }
+        .nav a.active { background: white; color: var(--primary-blue); }
+        
         .metrics-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -93,7 +93,11 @@
         .metric-value.green { color: var(--success-green); }
         .metric-value.red { color: var(--warning-red); }
         .metric-value.blue { color: var(--accent-blue); }
-        .metric-change { font-size: 0.85rem; color: var(--text-secondary); }
+        .metric-change {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        
         .compliance-summary {
             text-align: center;
             padding: 2.5rem;
@@ -114,6 +118,7 @@
             text-transform: uppercase;
             letter-spacing: 2px;
         }
+        
         .controls-section {
             background: var(--bg-light);
             border: 1px solid var(--border-color);
@@ -128,6 +133,7 @@
             color: var(--accent-blue);
             font-family: 'IBM Plex Mono', monospace;
         }
+        
         .slider-group {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -145,7 +151,7 @@
             align-items: center;
             margin-bottom: 1rem;
         }
-        .slider-label { font-size: 1rem; font-weight: 600; color: var(--text-primary); }
+        .slider-label { font-size: 1rem; font-weight: 600; }
         .slider-value {
             font-size: 1.8rem;
             font-weight: 700;
@@ -162,7 +168,6 @@
         }
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
-            appearance: none;
             width: 24px;
             height: 24px;
             border-radius: 50%;
@@ -170,15 +175,7 @@
             cursor: pointer;
             box-shadow: 0 2px 8px rgba(68, 114, 196, 0.5);
         }
-        input[type="range"]::-moz-range-thumb {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            background: var(--accent-blue);
-            cursor: pointer;
-            box-shadow: 0 2px 8px rgba(68, 114, 196, 0.5);
-            border: none;
-        }
+        
         .rules-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
@@ -188,6 +185,7 @@
         @media (min-width: 1200px) {
             .rules-grid { grid-template-columns: repeat(3, 1fr); }
         }
+        
         .rule-card {
             background: var(--bg-light);
             border: 1px solid var(--border-color);
@@ -208,6 +206,7 @@
             background: linear-gradient(135deg, var(--bg-light) 0%, rgba(255, 193, 7, 0.08) 100%);
             box-shadow: 0 4px 16px rgba(255, 193, 7, 0.2);
         }
+        
         .rule-header {
             display: flex;
             justify-content: space-between;
@@ -237,6 +236,7 @@
             background: rgba(231, 76, 60, 0.2);
             color: var(--warning-red);
         }
+        
         .rule-description {
             font-size: 1rem;
             color: var(--text-primary);
@@ -244,6 +244,7 @@
             line-height: 1.6;
         }
         .rule-description strong { color: var(--accent-blue); }
+        
         .rule-values {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
@@ -267,158 +268,172 @@
 <body>
     <div class="dashboard">
         <div class="header">
-            <div class="header-content">
-                <div class="logo">MONEYFACTS® POLICY DASHBOARD</div>
-                <div class="subtitle">Interactive Rules of Thumb Analysis • Real-Time Scenario Modeling</div>
+            <div class="logo">MONEYFACTS® POLICY DASHBOARD</div>
+            <div class="subtitle">Interactive Rules of Thumb Analysis • Real-Time Scenario Modeling</div>
+            <div class="nav">
+                <a href="index.html" class="active">Dashboard</a>
+                <a href="factors.html">Multi-Factor Analysis</a>
+                <a href="charts.html">Charts</a>
             </div>
         </div>
 
-        <div id="metrics" class="metrics-grid"></div>
-        <div id="compliance" class="compliance-summary"></div>
-        
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-label">Bank Base Rate</div>
+                <div class="metric-value blue" id="bbr-display">3.75%</div>
+                <div class="metric-change">Current policy rate</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">CPI Inflation</div>
+                <div class="metric-value red" id="cpi-display">3.00%</div>
+                <div class="metric-change">Consumer price index</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Recommended BBR</div>
+                <div class="metric-value green" id="recommended-bbr">5.50%</div>
+                <div class="metric-change">Per Core Rule (CPI + 2.50%)</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Policy Gap</div>
+                <div class="metric-value" id="policy-gap">-1.75pp</div>
+                <div class="metric-change">Deviation from target</div>
+            </div>
+        </div>
+
+        <div class="compliance-summary">
+            <div class="compliance-score" id="compliance-score">56%</div>
+            <div class="compliance-label" id="compliance-label">Rules Compliance Rate (5 of 9 rules)</div>
+        </div>
+
         <div class="controls-section">
-            <div class="section-title">⚙ SCENARIO CONTROLS</div>
+            <div class="section-title">⚙️ SCENARIO CONTROLS</div>
             <div class="slider-group">
                 <div class="slider-container">
                     <div class="slider-header">
                         <span class="slider-label">Bank Base Rate</span>
-                        <span class="slider-value" id="bbr-display">5.00%</span>
+                        <span class="slider-value" id="bbr-slider-value">3.75%</span>
                     </div>
-                    <input type="range" id="bbr-slider" min="0" max="15" step="0.25" value="5.00">
+                    <input type="range" id="bbr-slider" min="0" max="15" step="0.25" value="3.75">
                 </div>
                 <div class="slider-container">
                     <div class="slider-header">
                         <span class="slider-label">CPI Inflation</span>
-                        <span class="slider-value" id="cpi-display">7.90%</span>
+                        <span class="slider-value" id="cpi-slider-value">3.00%</span>
                     </div>
-                    <input type="range" id="cpi-slider" min="0" max="15" step="0.25" value="7.90">
+                    <input type="range" id="cpi-slider" min="0" max="15" step="0.25" value="3.00">
                 </div>
             </div>
         </div>
 
-        <div class="section-title" style="margin-bottom: 1.5rem;">📋 ALL 9 RULES OF THUMB ANALYSIS</div>
-        <div id="rules" class="rules-grid"></div>
+        <div class="section-title">📋 ALL 9 RULES OF THUMB ANALYSIS</div>
+        <div class="rules-grid" id="rules-grid"></div>
     </div>
 
     <script>
-        let bbr = 5.00;
-        let cpi = 7.90;
+        let bbr = 3.75;
+        let cpi = 3.00;
+        let savings = 3.31;
+        let mortgage = 4.90;
+        let gilt = 4.37;
 
-        const bbrSlider = document.getElementById('bbr-slider');
-        const cpiSlider = document.getElementById('cpi-slider');
-        const bbrDisplay = document.getElementById('bbr-display');
-        const cpiDisplay = document.getElementById('cpi-display');
-
-        function updateDashboard() {
-            bbr = parseFloat(bbrSlider.value);
-            cpi = parseFloat(cpiSlider.value);
-
-            bbrDisplay.textContent = bbr.toFixed(2) + '%';
-            cpiDisplay.textContent = cpi.toFixed(2) + '%';
-
-            const recommendedBbr = cpi + 2.50;
-            const policyGap = bbr - recommendedBbr;
-
-            // Update metrics
-            document.getElementById('metrics').innerHTML = `
-                <div class="metric-card">
-                    <div class="metric-label">Bank Base Rate</div>
-                    <div class="metric-value blue">${bbr.toFixed(2)}%</div>
-                    <div class="metric-change">Current policy rate</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-label">CPI Inflation</div>
-                    <div class="metric-value red">${cpi.toFixed(2)}%</div>
-                    <div class="metric-change">Consumer price index</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-label">Recommended BBR</div>
-                    <div class="metric-value green">${recommendedBbr.toFixed(2)}%</div>
-                    <div class="metric-change">Per Core Rule (CPI + 2.50%)</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-label">Policy Gap</div>
-                    <div class="metric-value ${policyGap < 0 ? 'red' : 'green'}">${policyGap > 0 ? '+' : ''}${policyGap.toFixed(2)}pp</div>
-                    <div class="metric-change">Deviation from target</div>
-                </div>
-            `;
-
-            // Calculate rules
-            const rules = [
+        function calculateRules() {
+            // Derived values
+            savings = bbr - 0.50;
+            mortgage = bbr + 1.50;
+            gilt = bbr + 1.50;
+            
+            return [
                 {
                     number: "CORE",
-                    name: "Taylor Principle (Foundation)",
+                    name: "Taylor Principle",
                     description: "BBR = CPI + 2.50%",
                     recommended: cpi + 2.50,
                     actual: bbr,
-                    threshold: 0.50
+                    threshold: 0.50,
+                    isCore: true
                 },
                 {
                     number: "RULE 1",
                     name: "Savings vs Base Rate",
-                    description: "Savings Rate = BBR - 1.50%",
-                    recommended: bbr - 1.50,
-                    actual: 2.41,
+                    description: "Savings = BBR - 0.50%",
+                    recommended: bbr - 0.50,
+                    actual: savings,
                     threshold: 0.50
                 },
                 {
                     number: "RULE 2",
                     name: "Savings vs Mortgage",
-                    description: "Savings Rate = Mortgage - 3.50%",
-                    recommended: 7.67 - 3.50,
-                    actual: 2.41,
+                    description: "Savings = Mortgage - 2.00%",
+                    recommended: mortgage - 2.00,
+                    actual: savings,
                     threshold: 0.50
                 },
                 {
                     number: "RULE 3",
                     name: "Real Savings Return",
-                    description: "Savings Rate = CPI + 1.25%",
-                    recommended: cpi + 1.25,
-                    actual: 2.41,
+                    description: "Savings = CPI + 2.00%",
+                    recommended: cpi + 2.00,
+                    actual: savings,
                     threshold: 0.50
                 },
                 {
                     number: "RULE 4",
-                    name: "10Y Gilt Yield",
+                    name: "Gilt vs Base Rate",
                     description: "10Y Gilt = BBR + 1.50%",
                     recommended: bbr + 1.50,
-                    actual: 4.44,
+                    actual: gilt,
                     threshold: 0.50
                 },
                 {
                     number: "RULE 5",
                     name: "Mortgage vs Base Rate",
-                    description: "Mortgage = BBR + 2.00%",
-                    recommended: bbr + 2.00,
-                    actual: 7.67,
+                    description: "Mortgage = BBR + 1.50%",
+                    recommended: bbr + 1.50,
+                    actual: mortgage,
                     threshold: 0.50
                 },
                 {
                     number: "RULE 6",
                     name: "Real Mortgage Rate",
-                    description: "Mortgage = CPI + 4.50%",
-                    recommended: cpi + 4.50,
-                    actual: 7.67,
+                    description: "Mortgage = CPI + 4.00%",
+                    recommended: cpi + 4.00,
+                    actual: mortgage,
                     threshold: 0.50
                 },
                 {
                     number: "RULE 7",
-                    name: "FOREX Competitiveness",
-                    description: "BBR should exceed other major central banks (US=5.25%, ECB=4.00%, Japan=-0.1%, China=3.65%)",
-                    recommended: 5.25,
+                    name: "BBR Competitiveness",
+                    description: "BBR should exceed major central banks (~5.00%)",
+                    recommended: 5.00,
                     actual: bbr,
                     threshold: 0.50
                 },
                 {
-                    number: "RULE 8",
-                    name: "Exchange Rate Targets",
-                    description: "GBP/USD should be ~$1.40, GBP/EUR should be ~€1.30 (Current: $1.27, €1.17)",
+                    number: "RULE 9",
+                    name: "Exchange Rate Target",
+                    description: "GBP/USD ≈ $1.40",
                     recommended: 1.40,
                     actual: 1.27,
                     threshold: 0.10
                 }
             ];
+        }
 
+        function updateDashboard() {
+            const recommendedBbr = cpi + 2.50;
+            const policyGap = bbr - recommendedBbr;
+
+            // Update metrics
+            document.getElementById('bbr-display').textContent = bbr.toFixed(2) + '%';
+            document.getElementById('cpi-display').textContent = cpi.toFixed(2) + '%';
+            document.getElementById('recommended-bbr').textContent = recommendedBbr.toFixed(2) + '%';
+            
+            const gapElement = document.getElementById('policy-gap');
+            gapElement.textContent = (policyGap > 0 ? '+' : '') + policyGap.toFixed(2) + 'pp';
+            gapElement.className = 'metric-value ' + (policyGap < 0 ? 'red' : 'green');
+
+            // Update rules
+            const rules = calculateRules();
             let compliantCount = 0;
             let rulesHtml = '';
 
@@ -427,13 +442,12 @@
                 const isCompliant = Math.abs(margin) <= rule.threshold;
                 if (isCompliant) compliantCount++;
 
-                const isCore = rule.number === 'CORE';
-                const cardClass = isCore ? 'rule-card core-rule' : `rule-card ${isCompliant ? 'compliant' : 'non-compliant'}`;
+                const cardClass = rule.isCore ? 'rule-card core-rule' : `rule-card ${isCompliant ? 'compliant' : 'non-compliant'}`;
 
                 rulesHtml += `
                     <div class="${cardClass}">
                         <div class="rule-header">
-                            <span class="rule-number" style="${isCore ? 'background: rgba(255, 193, 7, 0.2); color: #ffc107;' : ''}">${rule.number}</span>
+                            <span class="rule-number" style="${rule.isCore ? 'background: rgba(255, 193, 7, 0.2); color: #ffc107;' : ''}">${rule.number}</span>
                             <span class="rule-status ${isCompliant ? 'compliant' : 'non-compliant'}">
                                 ${isCompliant ? '✓ COMPLIANT' : '✗ NON-COMPLIANT'}
                             </span>
@@ -446,19 +460,19 @@
                             <div class="rule-value-item">
                                 <div class="rule-value-label">Target</div>
                                 <div class="rule-value-number" style="color: var(--accent-blue);">
-                                    ${rule.recommended.toFixed(2)}${rule.number === 'RULE 8' ? '' : '%'}
+                                    ${rule.recommended.toFixed(2)}${rule.number === 'RULE 9' ? '' : '%'}
                                 </div>
                             </div>
                             <div class="rule-value-item">
                                 <div class="rule-value-label">Actual</div>
                                 <div class="rule-value-number" style="color: var(--text-primary);">
-                                    ${rule.actual.toFixed(2)}${rule.number === 'RULE 8' ? '' : '%'}
+                                    ${rule.actual.toFixed(2)}${rule.number === 'RULE 9' ? '' : '%'}
                                 </div>
                             </div>
                             <div class="rule-value-item">
                                 <div class="rule-value-label">Margin</div>
                                 <div class="rule-value-number" style="color: ${isCompliant ? 'var(--success-green)' : 'var(--warning-red)'};">
-                                    ${margin > 0 ? '+' : ''}${margin.toFixed(2)}${rule.number === 'RULE 8' ? '' : 'pp'}
+                                    ${margin > 0 ? '+' : ''}${margin.toFixed(2)}${rule.number === 'RULE 9' ? '' : 'pp'}
                                 </div>
                             </div>
                         </div>
@@ -466,22 +480,31 @@
                 `;
             });
 
-            document.getElementById('rules').innerHTML = rulesHtml;
+            document.getElementById('rules-grid').innerHTML = rulesHtml;
 
+            // Update compliance
             const complianceRate = Math.round((compliantCount / rules.length) * 100);
             const complianceColor = complianceRate >= 70 ? 'var(--success-green)' : 'var(--warning-red)';
             
-            document.getElementById('compliance').innerHTML = `
-                <div class="compliance-score" style="color: ${complianceColor};">
-                    ${complianceRate}%
-                </div>
-                <div class="compliance-label">Rules Compliance Rate (${compliantCount} of 9 rules)</div>
-            `;
+            document.getElementById('compliance-score').textContent = complianceRate + '%';
+            document.getElementById('compliance-score').style.color = complianceColor;
+            document.getElementById('compliance-label').textContent = `Rules Compliance Rate (${compliantCount} of 9 rules)`;
         }
 
-        bbrSlider.addEventListener('input', updateDashboard);
-        cpiSlider.addEventListener('input', updateDashboard);
+        // Slider event listeners
+        document.getElementById('bbr-slider').addEventListener('input', function() {
+            bbr = parseFloat(this.value);
+            document.getElementById('bbr-slider-value').textContent = bbr.toFixed(2) + '%';
+            updateDashboard();
+        });
 
+        document.getElementById('cpi-slider').addEventListener('input', function() {
+            cpi = parseFloat(this.value);
+            document.getElementById('cpi-slider-value').textContent = cpi.toFixed(2) + '%';
+            updateDashboard();
+        });
+
+        // Initial render
         updateDashboard();
     </script>
 </body>

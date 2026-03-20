@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moneyfacts - Why BoE Cannot Comply</title>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary-blue: #1a3a5c;
+            --accent-blue: #4472c4;
+            --success-green: #70ad47;
+            --warning-red: #e74c3c;
+            --warning-orange: #ff9800;
+            --bg-dark: #0f1419;
+            --bg-medium: #1a1f2e;
+            --bg-light: #242b3d;
+            --text-primary: #e8eaed;
+            --text-secondary: #9aa0a6;
+            --border-color: #2d3748;
+        }
+        body {
+            font-family: 'IBM Plex Sans', sans-serif;
+            background: linear-gradient(135deg, #0f1419 0%, #1a1f2e 100%);
+            color: #e8eaed;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .dashboard { max-width: 1400px; margin: 0 auto; }
+        .header {
+            background: linear-gradient(135deg, #1a3a5c 0%, #4472c4 100%);
+            padding: 2rem 3rem;
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px rgba(68, 114, 196, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            transform: translate(30%, -30%);
+        }
+        .header-content { position: relative; z-index: 1; }
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 0.5rem;
+            font-family: 'IBM Plex Mono', monospace;
+        }
+        .subtitle { font-size: 1rem; color: rgba(255,255,255,0.8); margin-bottom: 1rem; }
+        .nav {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .nav a {
+            padding: 0.6rem 1.5rem;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+        .nav a.active { background: white; color: #1a3a5c; }
+        
+        .policy-gap-banner {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            padding: 2rem;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 2rem;
+            border: 2px solid #c0392b;
+        }
+        .policy-gap-value {
+            font-size: 4rem;
+            font-weight: 700;
+            font-family: 'IBM Plex Mono', monospace;
+            color: white;
+        }
+        .policy-gap-label {
+            font-size: 1.2rem;
+            color: rgba(255,255,255,0.9);
+            margin-top: 0.5rem;
+        }
+        
+        .factors-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .factor-card {
+            background: #242b3d;
+            border: 2px solid;
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s;
+        }
+        .factor-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        }
+        .factor-card.external { border-color: #ff9800; }
+        .factor-card.internal { border-color: #9c27b0; }
+        .factor-card.tradeoff { border-color: #2196f3; }
+        .factor-card.structural { border-color: #795548; }
+        .factor-card.fiscal { border-color: #f44336; }
+        
+        .factor-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .factor-icon {
+            font-size: 2rem;
+        }
+        .factor-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            font-family: 'IBM Plex Mono', monospace;
+        }
+        .factor-card.external .factor-title { color: #ff9800; }
+        .factor-card.internal .factor-title { color: #9c27b0; }
+        .factor-card.tradeoff .factor-title { color: #2196f3; }
+        .factor-card.structural .factor-title { color: #795548; }
+        .factor-card.fiscal .factor-title { color: #f44336; }
+        
+        .factor-impact {
+            font-size: 2.5rem;
+            font-weight: 700;
+            font-family: 'IBM Plex Mono', monospace;
+            color: #e74c3c;
+            margin: 1rem 0;
+        }
+        
+        .factor-breakdown {
+            background: rgba(255,255,255,0.03);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+        .breakdown-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .breakdown-item:last-child { border-bottom: none; }
+        .breakdown-value {
+            font-weight: 700;
+            font-family: 'IBM Plex Mono', monospace;
+        }
+        
+        .live-badge {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            background: rgba(112,173,71,0.2);
+            color: #70ad47;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            margin-left: 0.5rem;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <div class="header-content">
+                <div class="logo">MONEYFACTS® POLICY DASHBOARD</div>
+                <div class="subtitle">Why Bank of England Cannot Comply with Rules of Thumb</div>
+                <div class="nav">
+                    <a href="index.html">Dashboard</a>
+                    <a href="factors.html" class="active">Multi-Factor Analysis</a>
+                    <a href="charts.html">Charts</a>
+                </div>
+            </div>
+        </div>
+
+        <div id="last-update" style="text-align:center; color:#9aa0a6; margin-bottom:1.5rem; font-size:0.9rem;">Loading live data...</div>
+
+        <div class="policy-gap-banner">
+            <div class="policy-gap-value" id="policy-gap">--</div>
+            <div class="policy-gap-label">BBR POLICY GAP (Current 3.75% vs Rules-Based Target)</div>
+        </div>
+
+        <div class="factors-grid">
+            <!-- Factor 1: External Shocks -->
+            <div class="factor-card external">
+                <div class="factor-header">
+                    <div class="factor-icon">🌍</div>
+                    <div>
+                        <div class="factor-title">1. EXTERNAL SHOCKS<span class="live-badge">LIVE</span></div>
+                        <div style="font-size:0.85rem; color:#9aa0a6;">Iran War pushes CPI up → BBR should rise</div>
+                    </div>
+                </div>
+                <div class="factor-impact" id="external-impact">--</div>
+                <div class="factor-breakdown" id="external-breakdown"></div>
+            </div>
+
+            <!-- Factor 2: Internal Constraints -->
+            <div class="factor-card internal">
+                <div class="factor-header">
+                    <div class="factor-icon">🏠</div>
+                    <div>
+                        <div class="factor-title">2. INTERNAL CONSTRAINTS</div>
+                        <div style="font-size:0.85rem; color:#9aa0a6;">Weak productivity + fiscal shocks push costs up</div>
+                    </div>
+                </div>
+                <div class="factor-impact" id="internal-impact">--</div>
+                <div class="factor-breakdown" id="internal-breakdown"></div>
+            </div>
+
+            <!-- Factor 3: Policy Trade-off -->
+            <div class="factor-card tradeoff">
+                <div class="factor-header">
+                    <div class="factor-icon">⚖️</div>
+                    <div>
+                        <div class="factor-title">3. POLICY TRADE-OFF</div>
+                        <div style="font-size:0.85rem; color:#9aa0a6;">Raising BBR risks deeper recession</div>
+                    </div>
+                </div>
+                <div class="factor-impact" id="unemployment-rate">--</div>
+                <div style="color:#9aa0a6; margin-top:1rem; font-size:0.95rem;">
+                    <strong>Unemployment: <span id="unemployment-display">--</span></strong><br>
+                    Raising BBR to rules-based target would deepen recession with unemployment already at decade-high.
+                </div>
+            </div>
+
+            <!-- Factor 4: Structural Drags -->
+            <div class="factor-card structural">
+                <div class="factor-header">
+                    <div class="factor-icon">🔧</div>
+                    <div>
+                        <div class="factor-title">4. STRUCTURAL DRAGS</div>
+                        <div style="font-size:0.85rem; color:#9aa0a6;">Brexit + low productivity = persistent inflation</div>
+                    </div>
+                </div>
+                <div class="factor-impact" id="brexit-impact">+0.50pp</div>
+                <div style="color:#9aa0a6; margin-top:1rem; font-size:0.95rem;">
+                    Brexit trade friction creates persistent structural inflation pressure, requiring permanently higher BBR just to maintain stability.
+                </div>
+            </div>
+
+            <!-- Factor 5: Fiscal Tightening -->
+            <div class="factor-card fiscal">
+                <div class="factor-header">
+                    <div class="factor-icon">💰</div>
+                    <div>
+                        <div class="factor-title">5. FISCAL TIGHTENING</div>
+                        <div style="font-size:0.85rem; color:#9aa0a6;">Government NICs/wage policies add inflation</div>
+                    </div>
+                </div>
+                <div class="factor-impact" id="fiscal-impact">--</div>
+                <div class="factor-breakdown">
+                    <div class="breakdown-item">
+                        <span>Employer NICs Rate</span>
+                        <span class="breakdown-value">15.0% (from 13.8%)</span>
+                    </div>
+                    <div class="breakdown-item">
+                        <span>NICs Threshold</span>
+                        <span class="breakdown-value">£5,000 (from £9,100)</span>
+                    </div>
+                    <div class="breakdown-item">
+                        <span>National Living Wage</span>
+                        <span class="breakdown-value">£12.71/hour</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div style="background:#242b3d; padding:2rem; border-radius:12px; border:1px solid #2d3748; text-align:center;">
+            <div style="font-size:1.5rem; font-weight:700; color:#e74c3c; margin-bottom:1rem;">
+                RESULT
+            </div>
+            <div style="font-size:1.1rem; line-height:1.8; color:#e8eaed;">
+                BBR at <strong style="color:#e74c3c;">3.75%</strong> when rules suggest <strong style="color:#70ad47;" id="required-bbr">--</strong>
+                = <strong style="color:#e74c3c;" id="final-gap">--</strong> policy gap
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function loadData() {
+            try {
+                const response = await fetch('http://localhost:5001/api/dashboard-data');
+                const data = await response.json();
+                
+                // Policy Gap
+                const policyGapPP = data.policy_gap * 100;
+                document.getElementById('policy-gap').textContent = policyGapPP.toFixed(2) + 'pp';
+                
+                // Required BBR
+                const requiredBBR = (data.scenario3.bbr * 100).toFixed(2);
+                document.getElementById('required-bbr').textContent = requiredBBR + '%';
+                document.getElementById('final-gap').textContent = policyGapPP.toFixed(2) + 'pp';
+                
+                // External Shocks
+                document.getElementById('external-impact').textContent = '+' + data.external_shock.toFixed(2) + 'pp';
+                document.getElementById('external-breakdown').innerHTML = `
+                    <div class="breakdown-item">
+                        <span>Brent Crude Oil</span>
+                        <span class="breakdown-value">$${data.oil_price.toFixed(2)}/bbl</span>
+                    </div>
+                    <div class="breakdown-item">
+                        <span>Oil Impact</span>
+                        <span class="breakdown-value">+${data.oil_impact.toFixed(2)}pp</span>
+                    </div>
+                    <div class="breakdown-item">
+                        <span>Natural Gas</span>
+                        <span class="breakdown-value">$${data.gas_price.toFixed(2)}/MMBtu</span>
+                    </div>
+                    <div class="breakdown-item">
+                        <span>Gas Impact</span>
+                        <span class="breakdown-value">+${data.gas_impact.toFixed(2)}pp</span>
+                    </div>
+                `;
+                
+                // Internal Constraints
+                document.getElementById('internal-impact').textContent = '+' + data.internal_shock.toFixed(2) + 'pp';
+                document.getElementById('internal-breakdown').innerHTML = `
+                    <div class="breakdown-item">
+                        <span>Productivity Drag (0.55% vs 1.5% trend)</span>
+                        <span class="breakdown-value">+${data.productivity_impact.toFixed(2)}pp</span>
+                    </div>
+                    <div class="breakdown-item">
+                        <span>Employer NICs Shock</span>
+                        <span class="breakdown-value">+${data.nics_impact.toFixed(2)}pp</span>
+                    </div>
+                    <div class="breakdown-item">
+                        <span>NLW Wage Pressure</span>
+                        <span class="breakdown-value">+${data.nlw_impact.toFixed(2)}pp</span>
+                    </div>
+                    <div class="breakdown-item">
+                        <span>Brexit Structural Drag</span>
+                        <span class="breakdown-value">+${data.brexit_impact.toFixed(2)}pp</span>
+                    </div>
+                `;
+                
+                // Policy Trade-off
+                const unemploymentPct = (data.unemployment * 100).toFixed(1);
+                document.getElementById('unemployment-rate').textContent = unemploymentPct + '%';
+                document.getElementById('unemployment-display').textContent = unemploymentPct + '%';
+                
+                // Fiscal Impact
+                document.getElementById('fiscal-impact').textContent = '+' + (data.nics_impact + data.nlw_impact).toFixed(2) + 'pp';
+                
+                document.getElementById('last-update').textContent = 'Last updated: ' + new Date(data.timestamp).toLocaleString() + ' • Auto-refresh: Every minute';
+                    
+            } catch (error) {
+                document.getElementById('last-update').textContent = 'Error: Ensure backend is running on port 5001 (python app.py)';
+                console.error(error);
+            }
+        }
+        
+        loadData();
+        setInterval(loadData, 60000);
+    </script>
+</body>
+</html>
+
+
+
+
+

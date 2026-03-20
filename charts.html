@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moneyfacts Charts - Multi-Factor Analysis</title>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary-blue: #1a3a5c;
+            --accent-blue: #4472c4;
+            --success-green: #70ad47;
+            --warning-red: #e74c3c;
+            --bg-dark: #0f1419;
+            --bg-medium: #1a1f2e;
+            --bg-light: #242b3d;
+            --text-primary: #e8eaed;
+            --text-secondary: #9aa0a6;
+            --border-color: #2d3748;
+        }
+        body {
+            font-family: 'IBM Plex Sans', sans-serif;
+            background: linear-gradient(135deg, var(--bg-dark) 0%, var(--bg-medium) 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .dashboard { max-width: 1600px; margin: 0 auto; }
+        .header {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--accent-blue) 100%);
+            padding: 2rem 3rem;
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px rgba(68, 114, 196, 0.2);
+        }
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 0.5rem;
+            font-family: 'IBM Plex Mono', monospace;
+        }
+        .subtitle { font-size: 1rem; color: rgba(255,255,255,0.8); margin-bottom: 1rem; }
+        .nav {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .nav a {
+            padding: 0.6rem 1.5rem;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        .nav a:hover { background: rgba(255,255,255,0.2); }
+        .nav a.active { background: white; color: var(--primary-blue); }
+        
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        .chart-card {
+            background: var(--bg-light);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+        }
+        .chart-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: var(--accent-blue);
+            font-family: 'IBM Plex Mono', monospace;
+        }
+        .chart-container {
+            position: relative;
+            height: 350px;
+        }
+        .live-badge {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            background: rgba(112,173,71,0.2);
+            color: var(--success-green);
+            border-radius: 12px;
+            font-size: 0.75rem;
+            margin-left: 0.5rem;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <div class="logo">MONEYFACTS® POLICY DASHBOARD</div>
+            <div class="subtitle">Multi-Factor Analysis • Interactive Visualization</div>
+            <div class="nav">
+                <a href="index.html">Dashboard</a>
+                <a href="factors.html">Multi-Factor Analysis</a>
+                <a href="charts.html" class="active">Charts</a>
+            </div>
+        </div>
+
+        <div id="last-update" style="text-align:center; color:var(--text-secondary); margin-bottom:1.5rem; font-size:0.9rem;">Loading live data...</div>
+
+        <div class="charts-grid">
+            <div class="chart-card">
+                <div class="chart-title">External Shocks Breakdown<span class="live-badge">LIVE</span></div>
+                <div class="chart-container">
+                    <canvas id="externalChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-title">Internal Constraints Breakdown</div>
+                <div class="chart-container">
+                    <canvas id="internalChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-title">Total Multi-Factor Impact on CPI</div>
+                <div class="chart-container">
+                    <canvas id="impactChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-title">3 Scenarios Comparison</div>
+                <div class="chart-container">
+                    <canvas id="scenariosChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-title">Policy Gap Analysis</div>
+                <div class="chart-container">
+                    <canvas id="policyGapChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-title">9 Rules Compliance</div>
+                <div class="chart-container">
+                    <canvas id="rulesChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        Chart.defaults.color = '#9aa0a6';
+        Chart.defaults.font.family = 'IBM Plex Sans';
+
+        let charts = {};
+
+        async function loadData() {
+            try {
+                const response = await fetch('http://localhost:5001/api/dashboard-data');
+                const data = await response.json();
+
+                // 1. External Shocks Chart
+                if (charts.external) charts.external.destroy();
+                charts.external = new Chart(document.getElementById('externalChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: [
+                            `Brent Crude Oil\n$${data.oil_price.toFixed(2)}/bbl`,
+                            `Natural Gas\n$${data.gas_price.toFixed(2)}/MMBtu`,
+                            'Total External Impact'
+                        ],
+                        datasets: [{
+                            label: 'Impact on CPI (pp)',
+                            data: [data.oil_impact, data.gas_impact, data.external_shock],
+                            backgroundColor: ['#e74c3c', '#e67e22', '#c0392b']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    title: (context) => {
+                                        if (context[0].label.includes('Brent')) return `Brent Crude: $${data.oil_price.toFixed(2)}/bbl`;
+                                        if (context[0].label.includes('Gas')) return `Natural Gas: $${data.gas_price.toFixed(2)}/MMBtu`;
+                                        return 'Total External Impact';
+                                    },
+                                    label: (context) => `Impact: +${context.parsed.y.toFixed(2)}pp on CPI`
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: { display: true, text: 'Inflation Impact (pp)' },
+                                grid: { color: '#2d3748' }
+                            },
+                            x: { grid: { display: false } }
+                        }
+                    }
+                });
+
+                // 2. Internal Constraints Chart
+                if (charts.internal) charts.internal.destroy();
+                charts.internal = new Chart(document.getElementById('internalChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: [
+                            `Productivity\n(0.55% vs 1.5% trend)`,
+                            `NICs Increase\n(15% rate, £5k threshold)`,
+                            `National Living Wage\n(£12.71/hour)`,
+                            `Brexit Structural Drag\n(+0.50pp)`,
+                            'Total Internal Impact'
+                        ],
+                        datasets: [{
+                            label: 'Impact on CPI (pp)',
+                            data: [
+                                data.productivity_impact,
+                                data.nics_impact,
+                                data.nlw_impact,
+                                data.brexit_impact,
+                                data.internal_shock
+                            ],
+                            backgroundColor: ['#9b59b6', '#3498db', '#1abc9c', '#795548', '#8e44ad']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: (context) => `Impact: +${context.parsed.y.toFixed(2)}pp on CPI`
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: { display: true, text: 'Inflation Impact (pp)' },
+                                grid: { color: '#2d3748' }
+                            },
+                            x: { grid: { display: false } }
+                        }
+                    }
+                });
+
+                // 3. Total Impact Waterfall
+                const baselineCPI = data.scenario2.cpi * 100;
+                const adjustedCPI = data.scenario3.cpi * 100;
+                
+                if (charts.impact) charts.impact.destroy();
+                charts.impact = new Chart(document.getElementById('impactChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: [
+                            `Baseline CPI\n${baselineCPI.toFixed(2)}%`,
+                            `+ External Shocks\n+${data.external_shock.toFixed(2)}pp`,
+                            `+ Internal Constraints\n+${data.internal_shock.toFixed(2)}pp`,
+                            `Adjusted CPI\n${adjustedCPI.toFixed(2)}%`
+                        ],
+                        datasets: [{
+                            label: 'CPI (%)',
+                            data: [
+                                baselineCPI,
+                                baselineCPI + data.external_shock,
+                                baselineCPI + data.external_shock + data.internal_shock,
+                                adjustedCPI
+                            ],
+                            backgroundColor: ['#4472c4', '#e74c3c', '#9b59b6', '#70ad47']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: (context) => `CPI: ${context.parsed.y.toFixed(2)}%`
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: { display: true, text: 'CPI (%)' },
+                                grid: { color: '#2d3748' }
+                            },
+                            x: { grid: { display: false } }
+                        }
+                    }
+                });
+
+                // 4. Scenarios Comparison
+                if (charts.scenarios) charts.scenarios.destroy();
+                charts.scenarios = new Chart(document.getElementById('scenariosChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: ['CPI', 'BBR', 'Savings', 'Mortgage', '10Y Gilt'],
+                        datasets: [
+                            {
+                                label: 'Scenario 1: Ideal (CPI 2.0%, BBR 4.5%)',
+                                data: [
+                                    data.scenario1.cpi * 100,
+                                    data.scenario1.bbr * 100,
+                                    data.scenario1.savings * 100,
+                                    data.scenario1.mortgage * 100,
+                                    data.scenario1.gilt * 100
+                                ],
+                                backgroundColor: '#ffc107'
+                            },
+                            {
+                                label: `Scenario 2: Current (CPI ${(data.scenario2.cpi * 100).toFixed(2)}%, BBR ${(data.scenario2.bbr * 100).toFixed(2)}%)`,
+                                data: [
+                                    data.scenario2.cpi * 100,
+                                    data.scenario2.bbr * 100,
+                                    data.scenario2.savings * 100,
+                                    data.scenario2.mortgage * 100,
+                                    data.scenario2.gilt * 100
+                                ],
+                                backgroundColor: '#e74c3c'
+                            },
+                            {
+                                label: `Scenario 3: External (CPI ${(data.scenario3.cpi * 100).toFixed(2)}%, BBR ${(data.scenario3.bbr * 100).toFixed(2)}%)`,
+                                data: [
+                                    data.scenario3.cpi * 100,
+                                    data.scenario3.bbr * 100,
+                                    data.scenario3.savings * 100,
+                                    data.scenario3.mortgage * 100,
+                                    data.scenario3.gilt * 100
+                                ],
+                                backgroundColor: '#4472c4'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: true, position: 'top' },
+                            tooltip: {
+                                callbacks: {
+                                    label: (context) => `${context.dataset.label.split('(')[0]}: ${context.parsed.y.toFixed(2)}%`
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: { display: true, text: 'Rate (%)' },
+                                grid: { color: '#2d3748' }
+                            },
+                            x: { grid: { display: false } }
+                        }
+                    }
+                });
+
+                // 5. Policy Gap
+                const recommendedBBR = data.scenario3.bbr * 100;
+                const currentBBR = data.scenario2.bbr * 100;
+                const policyGap = data.policy_gap * 100;
+
+                if (charts.gap) charts.gap.destroy();
+                charts.gap = new Chart(document.getElementById('policyGapChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: [
+                            `Current BBR\n${currentBBR.toFixed(2)}%`,
+                            `Required BBR\n${recommendedBBR.toFixed(2)}%`,
+                            `Policy Gap\n${policyGap.toFixed(2)}pp`
+                        ],
+                        datasets: [{
+                            label: 'Rate/Gap',
+                            data: [currentBBR, recommendedBBR, policyGap],
+                            backgroundColor: ['#4472c4', '#70ad47', '#e74c3c']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: (context) => {
+                                        if (context.label.includes('Gap')) return `Gap: ${context.parsed.y.toFixed(2)}pp`;
+                                        return `Rate: ${context.parsed.y.toFixed(2)}%`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                title: { display: true, text: 'Rate/Gap (% or pp)' },
+                                grid: { color: '#2d3748' }
+                            },
+                            x: { grid: { display: false } }
+                        }
+                    }
+                });
+
+                // 6. Rules Compliance
+                const cpi = data.scenario2.cpi * 100;
+                const bbr = data.scenario2.bbr * 100;
+                const savings = data.scenario2.savings * 100;
+                const mortgage = data.scenario2.mortgage * 100;
+                const gilt = data.scenario2.gilt * 100;
+
+                const rules = [
+                    { name: 'CORE\n(BBR=CPI+2.5)', target: cpi + 2.50, actual: bbr },
+                    { name: 'RULE 1\n(Sav=BBR-0.5)', target: bbr - 0.50, actual: savings },
+                    { name: 'RULE 2\n(Sav=Mort-2.0)', target: mortgage - 2.00, actual: savings },
+                    { name: 'RULE 3\n(Sav=CPI+2.0)', target: cpi + 2.00, actual: savings },
+                    { name: 'RULE 4\n(Gilt=BBR+1.5)', target: bbr + 1.50, actual: gilt },
+                    { name: 'RULE 5\n(Mort=BBR+1.5)', target: bbr + 1.50, actual: mortgage },
+                    { name: 'RULE 6\n(Mort=CPI+4.0)', target: cpi + 4.00, actual: mortgage },
+                    { name: 'RULE 7\n(BBR>5.0)', target: 5.00, actual: bbr },
+                    { name: 'RULE 9\n(GBP/USD~1.40)', target: 1.40, actual: 1.27 }
+                ];
+
+                const margins = rules.map(r => r.actual - r.target);
+                const colors = margins.map(m => Math.abs(m) <= 0.50 ? '#70ad47' : '#e74c3c');
+
+                if (charts.rules) charts.rules.destroy();
+                charts.rules = new Chart(document.getElementById('rulesChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: rules.map(r => r.name),
+                        datasets: [{
+                            label: 'Margin',
+                            data: margins,
+                            backgroundColor: colors
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    title: (context) => rules[context[0].dataIndex].name.replace('\n', ' '),
+                                    label: (context) => [
+                                        `Target: ${rules[context.dataIndex].target.toFixed(2)}${context.dataIndex === 8 ? '' : '%'}`,
+                                        `Actual: ${rules[context.dataIndex].actual.toFixed(2)}${context.dataIndex === 8 ? '' : '%'}`,
+                                        `Margin: ${context.parsed.y > 0 ? '+' : ''}${context.parsed.y.toFixed(2)}${context.dataIndex === 8 ? '' : 'pp'}`
+                                    ]
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                title: { display: true, text: 'Margin (pp or absolute)' },
+                                grid: { color: '#2d3748' }
+                            },
+                            x: { grid: { display: false } }
+                        }
+                    }
+                });
+
+                document.getElementById('last-update').textContent = 'Last updated: ' + new Date(data.timestamp).toLocaleString() + ' • Auto-refresh: Every minute';
+            } catch (error) {
+                document.getElementById('last-update').textContent = 'Error: Ensure backend is running (python app.py)';
+                console.error(error);
+            }
+        }
+
+        loadData();
+        setInterval(loadData, 60000);
+    </script>
+</body>
+</html>
