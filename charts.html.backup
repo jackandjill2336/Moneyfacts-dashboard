@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moneyfacts Dashboard - Charts</title>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary-blue: #1a3a5c;
+            --accent-blue: #4472c4;
+            --success-green: #70ad47;
+            --warning-red: #e74c3c;
+            --bg-dark: #0f1419;
+            --bg-medium: #1a1f2e;
+            --bg-light: #242b3d;
+            --text-primary: #e8eaed;
+            --text-secondary: #9aa0a6;
+            --border-color: #2d3748;
+        }
+        body {
+            font-family: 'IBM Plex Sans', sans-serif;
+            background: linear-gradient(135deg, #0f1419 0%, #1a1f2e 100%);
+            color: #e8eaed;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .dashboard { max-width: 1400px; margin: 0 auto; }
+        .header {
+            background: linear-gradient(135deg, #1a3a5c 0%, #4472c4 100%);
+            padding: 2rem 3rem;
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px rgba(68, 114, 196, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            transform: translate(30%, -30%);
+        }
+        .header-content { position: relative; z-index: 1; }
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 0.5rem;
+            font-family: 'IBM Plex Mono', monospace;
+            letter-spacing: -1px;
+        }
+        .subtitle { font-size: 1rem; color: rgba(255,255,255,0.8); font-weight: 300; margin-bottom: 1rem; }
+        .nav {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .nav a {
+            padding: 0.6rem 1.5rem;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        .nav a.active { background: white; color: #1a3a5c; }
+        .nav a:hover { background: rgba(255,255,255,0.2); }
+        
+        .chart-container {
+            background: #242b3d;
+            border: 1px solid #2d3748;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        .chart-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: #4472c4;
+            font-family: 'IBM Plex Mono', monospace;
+        }
+        canvas { max-height: 400px; }
+        
+        .rules-circles {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 2rem;
+            padding: 2rem 0;
+        }
+        .rule-circle {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        .rule-circle:hover {
+            transform: scale(1.1);
+        }
+        .circle-svg {
+            width: 120px;
+            height: 120px;
+            margin-bottom: 1rem;
+        }
+        .circle-bg {
+            fill: none;
+            stroke: #2d3748;
+            stroke-width: 10;
+        }
+        .circle-progress {
+            fill: none;
+            stroke-width: 10;
+            stroke-linecap: round;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+            transition: stroke-dashoffset 1s ease;
+        }
+        .circle-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            fill: #e8eaed;
+            font-family: 'IBM Plex Mono', monospace;
+        }
+        .rule-label {
+            font-size: 0.85rem;
+            color: #9aa0a6;
+            text-align: center;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <div class="header-content">
+                <div class="logo">MONEYFACTS® POLICY DASHBOARD</div>
+                <div class="subtitle">Interactive Rules of Thumb Analysis • Real-Time Scenario Modeling</div>
+                <div class="nav">
+                    <a href="index.html">Dashboard</a>
+                    <a href="charts.html" class="active">Charts</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <div class="chart-title">📈 BBR vs CPI Historical Trend (2023-2026)</div>
+            <canvas id="chart1"></canvas>
+        </div>
+
+        <div class="chart-container">
+            <div class="chart-title">📊 3 Scenarios Comparison</div>
+            <canvas id="chart2"></canvas>
+        </div>
+
+        <div class="chart-container">
+            <div class="chart-title">🎯 9 Rules of Thumb Compliance (Interactive)</div>
+            <div class="rules-circles" id="rulesCircles"></div>
+        </div>
+
+        <div class="chart-container">
+            <div class="chart-title">📉 Policy Gap Over Time (BBR Deviation from Target)</div>
+            <canvas id="chart4"></canvas>
+        </div>
+    </div>
+
+    <script>
+        // Chart 1: BBR vs CPI Trend
+        new Chart(document.getElementById('chart1'), {
+            type: 'line',
+            data: {
+                labels: ['Jan 23', 'Apr 23', 'Jul 23', 'Oct 23', 'Jan 24', 'Apr 24', 'Jul 24', 'Oct 24', 'Jan 25', 'Apr 25', 'Jul 25', 'Oct 25', 'Jan 26'],
+                datasets: [{
+                    label: 'Bank Base Rate',
+                    data: [4.0, 4.25, 5.0, 5.25, 5.25, 5.25, 5.0, 5.0, 4.75, 4.5, 4.25, 4.0, 3.75],
+                    borderColor: '#4472c4',
+                    backgroundColor: 'rgba(68, 114, 196, 0.1)',
+                    tension: 0.4,
+                    borderWidth: 3
+                }, {
+                    label: 'CPI Inflation',
+                    data: [10.1, 8.7, 6.8, 4.6, 4.0, 3.2, 2.2, 1.7, 2.5, 2.6, 2.7, 2.9, 3.0],
+                    borderColor: '#e74c3c',
+                    backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                    tension: 0.4,
+                    borderWidth: 3
+                }, {
+                    label: 'Recommended BBR (CPI + 2.5%)',
+                    data: [12.6, 11.2, 9.3, 7.1, 6.5, 5.7, 4.7, 4.2, 5.0, 5.1, 5.2, 5.4, 5.5],
+                    borderColor: '#70ad47',
+                    borderDash: [8, 4],
+                    backgroundColor: 'transparent',
+                    tension: 0.4,
+                    borderWidth: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                plugins: {
+                    legend: { 
+                        labels: { 
+                            color: '#e8eaed',
+                            font: { size: 14 }
+                        } 
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        titleFont: { size: 14 },
+                        bodyFont: { size: 13 }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { 
+                            color: '#9aa0a6',
+                            font: { size: 12 }
+                        },
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        title: { 
+                            display: true, 
+                            text: 'Rate (%)', 
+                            color: '#e8eaed',
+                            font: { size: 14, weight: 'bold' }
+                        }
+                    },
+                    x: {
+                        ticks: { 
+                            color: '#9aa0a6',
+                            font: { size: 12 }
+                        },
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                    }
+                }
+            }
+        });
+
+        // Chart 2: 3 Scenarios Comparison
+        new Chart(document.getElementById('chart2'), {
+            type: 'bar',
+            data: {
+                labels: ['CPI', 'BBR', 'Savings', 'Mortgage', 'Gilt'],
+                datasets: [{
+                    label: 'Scenario 1: Ideal',
+                    data: [2.0, 4.5, 4.0, 6.0, 6.0],
+                    backgroundColor: 'rgba(255, 193, 7, 0.8)',
+                    borderColor: '#ffc107',
+                    borderWidth: 2
+                }, {
+                    label: 'Scenario 2: Current',
+                    data: [3.0, 3.75, 3.31, 4.9, 4.37],
+                    backgroundColor: 'rgba(231, 76, 60, 0.8)',
+                    borderColor: '#e74c3c',
+                    borderWidth: 2
+                }, {
+                    label: 'Scenario 3: External',
+                    data: [3.65, 6.15, 5.65, 7.65, 7.65],
+                    backgroundColor: 'rgba(68, 114, 196, 0.8)',
+                    borderColor: '#4472c4',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                plugins: {
+                    legend: { 
+                        labels: { 
+                            color: '#e8eaed',
+                            font: { size: 14 }
+                        } 
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { 
+                            color: '#9aa0a6',
+                            font: { size: 12 }
+                        },
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        title: { 
+                            display: true, 
+                            text: 'Rate (%)', 
+                            color: '#e8eaed',
+                            font: { size: 14, weight: 'bold' }
+                        }
+                    },
+                    x: {
+                        ticks: { 
+                            color: '#9aa0a6',
+                            font: { size: 12 }
+                        },
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                    }
+                }
+            }
+        });
+
+        // Interactive Circular Progress for Rules
+        const rules = [
+            { name: 'CORE', compliant: false, percentage: 0 },
+            { name: 'RULE 1', compliant: true, percentage: 100 },
+            { name: 'RULE 2', compliant: true, percentage: 100 },
+            { name: 'RULE 3', compliant: false, percentage: 0 },
+            { name: 'RULE 4', compliant: false, percentage: 0 },
+            { name: 'RULE 5', compliant: true, percentage: 100 },
+            { name: 'RULE 6', compliant: false, percentage: 0 },
+            { name: 'RULE 7', compliant: true, percentage: 100 },
+            { name: 'RULE 8', compliant: false, percentage: 0 }
+        ];
+
+        const rulesContainer = document.getElementById('rulesCircles');
+        
+        rules.forEach(rule => {
+            const color = rule.compliant ? '#70ad47' : '#e74c3c';
+            const radius = 50;
+            const circumference = 2 * Math.PI * radius;
+            const offset = circumference - (rule.percentage / 100) * circumference;
+            
+            const div = document.createElement('div');
+            div.className = 'rule-circle';
+            div.innerHTML = `
+                <svg class="circle-svg" viewBox="0 0 120 120">
+                    <circle class="circle-bg" cx="60" cy="60" r="${radius}"/>
+                    <circle class="circle-progress" 
+                        cx="60" cy="60" r="${radius}"
+                        stroke="${color}"
+                        stroke-dasharray="${circumference}"
+                        stroke-dashoffset="${offset}"/>
+                    <text class="circle-text" x="50%" y="50%" text-anchor="middle" dy=".3em">
+                        ${rule.compliant ? '✓' : '✗'}
+                    </text>
+                </svg>
+                <div class="rule-label">${rule.name}</div>
+            `;
+            
+            div.addEventListener('click', () => {
+                alert(`${rule.name}: ${rule.compliant ? 'COMPLIANT ✓' : 'NON-COMPLIANT ✗'}\n\nClick rule cards on Dashboard page for details.`);
+            });
+            
+            rulesContainer.appendChild(div);
+        });
+
+        // Chart 4: Policy Gap with proper data
+        new Chart(document.getElementById('chart4'), {
+            type: 'bar',
+            data: {
+                labels: ['Jan 23', 'Apr 23', 'Jul 23', 'Oct 23', 'Jan 24', 'Apr 24', 'Jul 24', 'Oct 24', 'Jan 25', 'Apr 25', 'Jul 25', 'Oct 25', 'Jan 26'],
+                datasets: [{
+                    label: 'Policy Gap (BBR - Recommended BBR)',
+                    data: [-8.6, -6.95, -4.3, -1.85, -1.25, -0.45, 0.3, 0.8, -0.25, -0.6, -0.95, -1.4, -1.75],
+                    backgroundColor: function(context) {
+                        const value = context.parsed.y;
+                        return value >= 0 ? 'rgba(112, 173, 71, 0.8)' : 'rgba(231, 76, 60, 0.8)';
+                    },
+                    borderColor: function(context) {
+                        const value = context.parsed.y;
+                        return value >= 0 ? '#70ad47' : '#e74c3c';
+                    },
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                plugins: {
+                    legend: { 
+                        labels: { 
+                            color: '#e8eaed',
+                            font: { size: 14 }
+                        } 
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                const value = context.parsed.y;
+                                label += (value > 0 ? '+' : '') + value.toFixed(2) + 'pp';
+                                label += value >= 0 ? ' (Above Target)' : ' (Below Target)';
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        ticks: { 
+                            color: '#9aa0a6',
+                            font: { size: 12 },
+                            callback: function(value) {
+                                return (value > 0 ? '+' : '') + value + 'pp';
+                            }
+                        },
+                        grid: { 
+                            color: function(context) {
+                                if (context.tick.value === 0) {
+                                    return 'rgba(255, 255, 255, 0.3)';
+                                }
+                                return 'rgba(255, 255, 255, 0.05)';
+                            }
+                        },
+                        title: { 
+                            display: true, 
+                            text: 'Gap (percentage points)', 
+                            color: '#e8eaed',
+                            font: { size: 14, weight: 'bold' }
+                        }
+                    },
+                    x: {
+                        ticks: { 
+                            color: '#9aa0a6',
+                            font: { size: 12 }
+                        },
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
