@@ -165,7 +165,7 @@
 
         async function loadData() {
             try {
-                const response = await fetch('http://localhost:5001/api/dashboard-data');
+                const response = await fetch('https://moneyfacts-dashboard-production.up.railway.app/api/dashboard-data');
                 const data = await response.json();
 
                 // 1. External Shocks Chart
